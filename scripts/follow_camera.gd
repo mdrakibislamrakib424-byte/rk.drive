@@ -20,22 +20,37 @@ extends Camera3D
 @export var max_speed_kmh: float = 140.0
 
 var _yaw: float = 0.0
+var _bound: bool = false
 
 
 func _ready() -> void:
-	if target == null:
-		push_error("FollowCamera: 'target' is not assigned.")
-		set_process(false)
-		return
 	fov = base_fov
+	make_current()
+	_bind_target()
+
+
+## Finds the car (scene wiring first, then node name, then "car" group)
+## and snaps behind it once. Retries every frame until the car exists,
+## so the camera can never get stuck at the world origin again.
+func _bind_target() -> bool:
+	if _bound and is_instance_valid(target):
+		return true
+	if not is_instance_valid(target):
+		var found: Node = get_node_or_null("../Car")
+		if found == null:
+			found = get_tree().get_first_node_in_group("car")
+		target = found as VehicleBody3D
+	if not is_instance_valid(target):
+		return false
+	_bound = true
 	_yaw = _get_target_yaw()
 	global_position = _get_desired_position()
 	_look_at_target()
-	make_current()
+	return true
 
 
 func _process(delta: float) -> void:
-	if not is_instance_valid(target):
+	if not _bind_target():
 		return
 	_yaw = lerp_angle(_yaw, _get_target_yaw(), 1.0 - exp(-rotation_smoothing * delta))
 	global_position = global_position.lerp(
