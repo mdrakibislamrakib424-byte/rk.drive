@@ -1,0 +1,39 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Export debug APK
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # GitHub changes HOME inside containers; Godot's templates, Android SDK
+      # settings and debug keystore live under /root, so point HOME back there.
+      - name: Import assets
+        run: |
+          export HOME=/root
+          godot --headless --verbose --editor --quit
+
+      - name: Export debug APK
+        run: |
+          export HOME=/root
+          mkdir -p build/android
+          godot --headless --verbose --export-debug "Android Debug" build/android/CityDrive-debug.apk
+
+      - name: Verify APK exists
+        run: test -s build/android/CityDrive-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CityDrive-debug-apk
+          path: build/android/CityDrive-debug.apk
+          if-no-files-found: error
