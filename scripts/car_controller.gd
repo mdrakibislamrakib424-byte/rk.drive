@@ -2,6 +2,7 @@ class_name CarController
 extends VehicleBody3D
 ## Arcade-realistic vehicle controller.
 ## Input is decoupled: touch UI, AI traffic or tests only call set_inputs().
+## NOTE: VehicleBody3D drives towards its local +Z axis (Vector3.MODEL_FRONT).
 
 signal speed_changed(speed_kmh: float)
 
@@ -10,7 +11,10 @@ signal speed_changed(speed_kmh: float)
 @export var max_reverse_force: float = 1200.0
 @export var max_brake_force: float = 70.0
 @export var handbrake_force: float = 120.0
+## Light braking while coasting, so the car slows down on its own.
+@export var coast_brake: float = 1.5
 @export var max_speed_kmh: float = 140.0
+@export var max_reverse_speed_kmh: float = 35.0
 
 @export_group("Steering")
 @export var max_steer_angle_deg: float = 32.0
@@ -49,9 +53,9 @@ func get_speed_kmh() -> float:
 	return linear_velocity.length() * 3.6
 
 
-## Positive when moving forward (Godot forward is -Z).
+## Positive when moving forward (the vehicle's forward axis is +Z).
 func get_forward_speed() -> float:
-	return -global_transform.basis.z.dot(linear_velocity)
+	return global_transform.basis.z.dot(linear_velocity)
 
 
 func _physics_process(delta: float) -> void:
@@ -66,15 +70,21 @@ func _apply_drive() -> void:
 	var force: float = 0.0
 	var brake_value: float = 0.0
 
-	if throttle_input > 0.0 and speed_kmh < max_speed_kmh:
-		force = throttle_input * max_engine_force
+	if throttle_input > 0.0:
+		if forward_speed < -1.0:
+			# Rolling backwards: brake first, then drive forward.
+			brake_value = throttle_input * max_brake_force
+		elif speed_kmh < max_speed_kmh:
+			force = throttle_input * max_engine_force
 	elif brake_input > 0.0:
 		if forward_speed > 1.0:
 			# Still rolling forward: brake.
 			brake_value = brake_input * max_brake_force
-		elif speed_kmh < 40.0:
+		elif speed_kmh < max_reverse_speed_kmh:
 			# Stopped or rolling backward: reverse.
 			force = -brake_input * max_reverse_force
+	else:
+		brake_value = coast_brake
 
 	if handbrake_active:
 		brake_value = handbrake_force
