@@ -32,6 +32,8 @@ var _last_reported_speed: int = -1
 
 
 func _ready() -> void:
+	# Lets the camera, touch pad and HUD find the car without scene wiring.
+	add_to_group("car")
 	# Validate setup early so scene mistakes are easy to find.
 	var wheel_count: int = 0
 	for child: Node in get_children():
