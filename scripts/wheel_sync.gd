@@ -13,9 +13,6 @@ const WHEEL_MAP: Dictionary = {
 }
 const MODEL_NODE_NAME: String = "Model"
 
-## The model is rotated 180 degrees on the car, so the visual wheels need the
-## same flip to keep the rim design facing outwards.
-var _visual_flip: Transform3D = Transform3D(Basis(Vector3.UP, PI), Vector3.ZERO)
 var _physics_wheels: Array[VehicleWheel3D] = []
 var _visual_wheels: Array[Node3D] = []
 
@@ -48,4 +45,4 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	for i: int in _physics_wheels.size():
-		_visual_wheels[i].global_transform = _physics_wheels[i].global_transform * _visual_flip
+		_visual_wheels[i].global_transform = _physics_wheels[i].global_transform
