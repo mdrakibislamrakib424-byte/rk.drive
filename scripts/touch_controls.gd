@@ -27,8 +27,6 @@ var _touch_to_pad: Dictionary = {}
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if car == null:
-		push_warning("TouchControls: 'car' is not assigned.")
 	get_viewport().size_changed.connect(_update_layout)
 	_update_layout()
 
@@ -52,7 +50,17 @@ func _input(event: InputEvent) -> void:
 		_assign_touch(drag.index, drag.position)
 
 
+## Finds the car by scene path first, then by the "car" group.
+func _find_car() -> CarController:
+	var found: Node = get_node_or_null("../../Car")
+	if found == null:
+		found = get_tree().get_first_node_in_group("car")
+	return found as CarController
+
+
 func _physics_process(_delta: float) -> void:
+	if not is_instance_valid(car):
+		car = _find_car()
 	if not is_instance_valid(car):
 		return
 
