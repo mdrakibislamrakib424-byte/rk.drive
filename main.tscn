@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/follow_camera.gd" id="2_cam"]
 [ext_resource type="Script" path="res://scripts/touch_controls.gd" id="3_touch"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="4_hud"]
-[ext_resource type="Script" path="res://scripts/wheel_sync.gd" id="5_wheel"]
+[ext_resource type="Script" path="res://scripts/pause_menu.gd" id="5_pause"]
 
 [sub_resource type="Shader" id="Shader_grid"]
 code = "shader_type spatial;\n\nvarying vec3 world_pos;\n\nvoid vertex() {\n    world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;\n}\n\nvoid fragment() {\n    vec2 coord = world_pos.xz / 4.0;\n    vec2 grid = abs(fract(coord - 0.5) - 0.5) / fwidth(coord);\n    float line = 1.0 - min(min(grid.x, grid.y), 1.0);\n    ALBEDO = mix(vec3(0.18), vec3(0.6), line);\n    ROUGHNESS = 0.95;\n}\n"
@@ -52,9 +52,6 @@ mesh = SubResource("PlaneMesh_ground")
 [node name="Car" parent="." instance=ExtResource("1_car")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
-[node name="WheelSync" type="Node" parent="Car"]
-script = ExtResource("5_wheel")
-
 [node name="Camera" type="Camera3D" parent="."]
 script = ExtResource("2_cam")
 target = NodePath("../Car")
@@ -72,6 +69,22 @@ mouse_filter = 2
 script = ExtResource("3_touch")
 car = NodePath("../../Car")
 
-[node name="SpeedLabel" type="Label" parent="UI"]
+[node name="Hud" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 script = ExtResource("4_hud")
 car = NodePath("../../Car")
+
+[node name="PauseMenu" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("5_pause")
