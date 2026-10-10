@@ -1,7 +1,8 @@
 class_name GameHud
 extends Control
 ## Racing HUD drawn in code at the top right: speed, gear (D1-D5 / R / N)
-## and an RPM bar. Everything scales with the screen height.
+## and an RPM bar, plus a short message when the camera view changes.
+## Everything scales with the screen height.
 
 const WHITE: Color = Color(1.0, 1.0, 1.0, 0.95)
 const SOFT_WHITE: Color = Color(1.0, 1.0, 1.0, 0.75)
@@ -12,6 +13,8 @@ const OUTLINE: Color = Color(0.0, 0.0, 0.0, 0.85)
 const SEGMENTS: int = 24
 
 @export var car: CarController
+
+var _camera_rig: FollowCamera
 
 
 func _ready() -> void:
@@ -30,6 +33,8 @@ func _find_car() -> CarController:
 func _process(_delta: float) -> void:
 	if not is_instance_valid(car):
 		car = _find_car()
+	if not is_instance_valid(_camera_rig):
+		_camera_rig = get_tree().get_first_node_in_group("camera_rig") as FollowCamera
 	queue_redraw()
 
 
@@ -80,6 +85,8 @@ func _draw() -> void:
 	if car.handbrake_active:
 		_text_left(font, "HANDBRAKE", bar_x, 132.0 * u, int(24.0 * u), RED)
 
+	_draw_camera_message(font, u)
+
 
 func _text_right(font: Font, text: String, right_x: float, baseline_y: float, font_size: int, color: Color) -> void:
 	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
@@ -91,3 +98,21 @@ func _text_left(font: Font, text: String, left_x: float, baseline_y: float, font
 	var outline_size: int = int(maxf(2.0, float(font_size) * 0.12))
 	draw_string_outline(font, position_xy, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, outline_size, OUTLINE)
 	draw_string(font, position_xy, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+
+## Shows "CAMERA: <view>" in the top centre for a moment after the view changes.
+func _draw_camera_message(font: Font, u: float) -> void:
+	if not is_instance_valid(_camera_rig):
+		return
+	var age: int = Time.get_ticks_msec() - _camera_rig.mode_changed_at_ms
+	if age < 0 or age > 1800:
+		return
+	var alpha: float = 1.0 - smoothstep(1200.0, 1800.0, float(age))
+	var label: String = "CAMERA: " + _camera_rig.get_mode_name()
+	var font_size: int = int(34.0 * u)
+	var width: float = font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var position_xy: Vector2 = Vector2((size.x - width) * 0.5, 190.0 * u)
+	draw_string_outline(font, position_xy, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+		int(maxf(2.0, float(font_size) * 0.12)), Color(0.0, 0.0, 0.0, 0.85 * alpha))
+	draw_string(font, position_xy, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
+		Color(1.0, 1.0, 1.0, alpha))

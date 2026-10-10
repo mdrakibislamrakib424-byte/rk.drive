@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="PlaceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/place_data.gd" id="1_place"]
+
+[resource]
+script = ExtResource("1_place")
+display_name = "Forest"
+day_sky_path = "res://assets/sky/je_gray_02_4k.hdr"
+night_sky_path = "res://assets/sky/dikhololo_night_4k.hdr"
+day_sun_direction = Vector3(0.549, 0.363, -0.753)
+night_light_direction = Vector3(-0.819, 0.486, -0.306)
+sun_color = Color(1, 0.93, 0.8, 1)
+sun_energy = 2.5
+moon_color = Color(0.55, 0.68, 1, 1)
+moon_energy = 0.5
+ambient_energy_day = 2.5
+ambient_energy_night = 5.0
+exposure_day = 1.0
+exposure_night = 1.2
+fog_color_day = Color(0.45, 0.5, 0.5, 1)
+fog_color_night = Color(0.05, 0.06, 0.09, 1)
+fog_density = 0.003
+start_hour = 15.0

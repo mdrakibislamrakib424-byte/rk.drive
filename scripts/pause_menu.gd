@@ -17,6 +17,7 @@ const STARTUP_GRACE_MS: int = 1500
 
 var _click: AudioStreamPlayer
 var _sound_button: Button
+var _time_button: Button
 var _sound_on: bool = true
 var _started_ms: int = 0
 
@@ -61,6 +62,7 @@ func _set_paused(paused: bool) -> void:
 	get_tree().paused = paused
 	visible = paused
 	if paused:
+		_update_time_label()
 		_play_click()
 
 
@@ -80,6 +82,22 @@ func _on_sound() -> void:
 	AudioServer.set_bus_mute(AudioServer.get_bus_index("Master"), not _sound_on)
 	_update_sound_label()
 	_play_click()
+
+
+func _on_time() -> void:
+	var world: Node = get_tree().get_first_node_in_group("world_manager")
+	if world != null and world.has_method("cycle_time_preset"):
+		world.call("cycle_time_preset")
+	_update_time_label()
+	_play_click()
+
+
+func _update_time_label() -> void:
+	var label: String = "DAY"
+	var world: Node = get_tree().get_first_node_in_group("world_manager")
+	if world != null and world.has_method("get_time_label"):
+		label = str(world.call("get_time_label"))
+	_time_button.text = "TIME: " + label
 
 
 func _update_sound_label() -> void:
@@ -121,7 +139,10 @@ func _build_ui() -> void:
 	box.add_child(_make_button("RESTART", _on_restart))
 	_sound_button = _make_button("", _on_sound)
 	box.add_child(_sound_button)
+	_time_button = _make_button("", _on_time)
+	box.add_child(_time_button)
 	_update_sound_label()
+	_update_time_label()
 
 
 func _make_button(label: String, callback: Callable) -> Button:

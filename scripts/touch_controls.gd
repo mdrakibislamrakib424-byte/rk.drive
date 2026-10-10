@@ -1,14 +1,14 @@
 class_name TouchControls
 extends Control
 ## On-screen driving pad drawn entirely in code (multi-touch capable).
-## Pads: steer left/right, gas, brake, handbrake, horn, two turn indicators, pause.
+## Pads: steer left/right, gas, brake, handbrake, horn, two turn indicators, pause, camera.
 ## Also reads the keyboard so the game can be tested on a PC:
 ##   A/D or arrows = steer, W/S = gas/brake, Space = handbrake,
-##   H = horn, Q/E = indicators, P or Esc = pause.
+##   H = horn, Q/E = indicators, C = camera view, P or Esc = pause.
 
-enum Pad { LEFT, RIGHT, GAS, BRAKE, HANDBRAKE, HORN, IND_LEFT, IND_RIGHT, PAUSE }
+enum Pad { LEFT, RIGHT, GAS, BRAKE, HANDBRAKE, HORN, IND_LEFT, IND_RIGHT, PAUSE, CAMERA }
 
-const PAD_COUNT: int = 9
+const PAD_COUNT: int = 10
 const COLOR_IDLE: Color = Color(1.0, 1.0, 1.0, 0.18)
 const COLOR_ACTIVE: Color = Color(1.0, 1.0, 1.0, 0.45)
 const COLOR_AMBER: Color = Color(1.0, 0.6, 0.1, 0.8)
@@ -22,8 +22,8 @@ const HIT_PADDING: float = 1.15
 
 var _centers: Array[Vector2] = []
 var _radii: Array[float] = []
-var _labels: Array[String] = ["<", ">", "GAS", "BRAKE", "HAND", "HORN", "", "", ""]
-var _pressed: Array[bool] = [false, false, false, false, false, false, false, false, false]
+var _labels: Array[String] = ["<", ">", "GAS", "BRAKE", "HAND", "HORN", "", "", "", "CAM"]
+var _pressed: Array[bool] = [false, false, false, false, false, false, false, false, false, false]
 ## Touch finger index -> Pad enum value.
 var _touch_to_pad: Dictionary = {}
 var _last_indicator_state: int = -1
@@ -63,6 +63,8 @@ func _input(event: InputEvent) -> void:
 				_on_pad_pressed(Pad.IND_LEFT)
 			elif key_event.physical_keycode == KEY_E:
 				_on_pad_pressed(Pad.IND_RIGHT)
+			elif key_event.physical_keycode == KEY_C:
+				_on_pad_pressed(Pad.CAMERA)
 
 
 ## Finds the car by scene path first, then by the "car" group.
@@ -169,12 +171,13 @@ func _update_layout() -> void:
 	var ind_left_center: Vector2 = Vector2(screen.x * 0.5 - r_mini * 1.6, top_y)
 	var ind_right_center: Vector2 = Vector2(screen.x * 0.5 + r_mini * 1.6, top_y)
 	var pause_center: Vector2 = Vector2(margin + r_mini, top_y)
+	var camera_center: Vector2 = Vector2(pause_center.x + r_mini * 2.6, top_y)
 
 	_centers = [
 		left_center, right_center, gas_center, brake_center, hand_center,
-		horn_center, ind_left_center, ind_right_center, pause_center,
+		horn_center, ind_left_center, ind_right_center, pause_center, camera_center,
 	]
-	_radii = [r_big, r_big, r_gas, r_big, r_small, r_small, r_mini, r_mini, r_mini]
+	_radii = [r_big, r_big, r_gas, r_big, r_small, r_small, r_mini, r_mini, r_mini, r_mini]
 	queue_redraw()
 
 
@@ -200,7 +203,9 @@ func _release_touch(index: int) -> void:
 
 
 func _refresh_pressed() -> void:
-	var next: Array[bool] = [false, false, false, false, false, false, false, false, false]
+	var next: Array[bool] = []
+	next.resize(PAD_COUNT)
+	next.fill(false)
 	for pad: int in _touch_to_pad.values():
 		next[pad] = true
 
@@ -224,3 +229,5 @@ func _on_pad_pressed(pad: int) -> void:
 				car.toggle_indicator(CarController.Indicator.RIGHT)
 		Pad.PAUSE:
 			get_tree().call_group("pause_menu", "toggle_pause")
+		Pad.CAMERA:
+			get_tree().call_group("camera_rig", "cycle_mode")
