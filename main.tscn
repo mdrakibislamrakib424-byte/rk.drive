@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://car.tscn" id="1_car"]
 [ext_resource type="Script" path="res://scripts/follow_camera.gd" id="2_cam"]
@@ -9,6 +9,8 @@
 [ext_resource type="Resource" path="res://data/places/forest.tres" id="7_forest"]
 [ext_resource type="Script" path="res://scripts/world/ground_builder.gd" id="8_ground"]
 [ext_resource type="Script" path="res://scripts/world/road_builder.gd" id="9_road"]
+[ext_resource type="Script" path="res://scripts/world/scenery_builder.gd" id="10_scenery"]
+[ext_resource type="Script" path="res://scripts/world/mountain_ring.gd" id="11_mountains"]
 
 [node name="Main" type="Node3D"]
 
@@ -21,6 +23,12 @@ script = ExtResource("8_ground")
 
 [node name="Road" type="Node3D" parent="."]
 script = ExtResource("9_road")
+
+[node name="Scenery" type="Node3D" parent="."]
+script = ExtResource("10_scenery")
+
+[node name="Mountains" type="MeshInstance3D" parent="."]
+script = ExtResource("11_mountains")
 
 [node name="Car" parent="." instance=ExtResource("1_car")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.75, 1, 0)
