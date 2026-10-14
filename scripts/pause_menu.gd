@@ -18,6 +18,8 @@ const STARTUP_GRACE_MS: int = 1500
 var _click: AudioStreamPlayer
 var _sound_button: Button
 var _time_button: Button
+var _fps_button: Button
+var _quality_button: Button
 var _sound_on: bool = true
 var _started_ms: int = 0
 
@@ -63,6 +65,8 @@ func _set_paused(paused: bool) -> void:
 	visible = paused
 	if paused:
 		_update_time_label()
+		_update_fps_label()
+	_update_quality_label()
 		_play_click()
 
 
@@ -90,6 +94,33 @@ func _on_time() -> void:
 		world.call("cycle_time_preset")
 	_update_time_label()
 	_play_click()
+
+
+func _on_quality() -> void:
+	_play_click()
+	GameSettings.set_quality((GameSettings.get_quality() + 1) % 3)
+	_update_quality_label()
+	# The world is built again with the new quality.
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+
+func _update_quality_label() -> void:
+	_quality_button.text = "QUALITY: " + GameSettings.get_quality_name()
+
+
+func _on_fps() -> void:
+	get_tree().call_group("game_hud", "toggle_fps")
+	_update_fps_label()
+	_play_click()
+
+
+func _update_fps_label() -> void:
+	var visible_now: bool = true
+	var hud: Node = get_tree().get_first_node_in_group("game_hud")
+	if hud != null and hud.has_method("is_fps_visible"):
+		visible_now = bool(hud.call("is_fps_visible"))
+	_fps_button.text = "FPS: ON" if visible_now else "FPS: OFF"
 
 
 func _update_time_label() -> void:
@@ -126,7 +157,7 @@ func _build_ui() -> void:
 	panel.add_child(margin)
 
 	var box: VBoxContainer = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 16)
+	box.add_theme_constant_override("separation", 10)
 	margin.add_child(box)
 
 	var title: Label = Label.new()
@@ -141,14 +172,19 @@ func _build_ui() -> void:
 	box.add_child(_sound_button)
 	_time_button = _make_button("", _on_time)
 	box.add_child(_time_button)
+	_fps_button = _make_button("", _on_fps)
+	box.add_child(_fps_button)
+	_quality_button = _make_button("", _on_quality)
+	box.add_child(_quality_button)
 	_update_sound_label()
 	_update_time_label()
+	_update_fps_label()
 
 
 func _make_button(label: String, callback: Callable) -> Button:
 	var button: Button = Button.new()
 	button.text = label
-	button.custom_minimum_size = Vector2(420.0, 76.0)
+	button.custom_minimum_size = Vector2(420.0, 58.0)
 	button.add_theme_font_size_override("font_size", 30)
 	button.add_theme_stylebox_override("normal", _make_style(BUTTON_COLOR, 18))
 	button.add_theme_stylebox_override("hover", _make_style(BUTTON_HOVER_COLOR, 18))

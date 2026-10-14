@@ -126,7 +126,7 @@ func _build_environment() -> void:
 	_environment.fog_sky_affect = 0.0
 
 	# Soft glow around very bright things such as the brake lights.
-	_environment.glow_enabled = glow_enabled
+	_environment.glow_enabled = glow_enabled and GameSettings.get_quality() >= 1
 	_environment.glow_intensity = 0.5
 	_environment.glow_strength = 0.9
 	_environment.glow_hdr_threshold = 1.2
@@ -138,7 +138,8 @@ func _build_environment() -> void:
 
 func _build_sun() -> void:
 	_sun = DirectionalLight3D.new()
-	_sun.shadow_enabled = shadows_enabled
+	# LOW quality: no shadows.
+	_sun.shadow_enabled = shadows_enabled and GameSettings.get_quality() >= 1
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	_sun.directional_shadow_max_distance = shadow_distance
 	add_child(_sun)

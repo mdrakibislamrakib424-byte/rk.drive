@@ -1,8 +1,8 @@
 class_name GameHud
 extends Control
 ## Racing HUD drawn in code at the top right: speed, gear (D1-D5 / R / N)
-## and an RPM bar, plus a short message when the camera view changes.
-## Everything scales with the screen height.
+## and an RPM bar, plus a short message when the camera view changes and an optional
+## FPS counter (top left). Everything scales with the screen height.
 
 const WHITE: Color = Color(1.0, 1.0, 1.0, 0.95)
 const SOFT_WHITE: Color = Color(1.0, 1.0, 1.0, 0.75)
@@ -11,15 +11,34 @@ const ORANGE: Color = Color(1.0, 0.62, 0.1)
 const RED: Color = Color(1.0, 0.2, 0.15)
 const OUTLINE: Color = Color(0.0, 0.0, 0.0, 0.85)
 const SEGMENTS: int = 24
+## The FPS numbers are calculated over this many seconds.
+const FPS_WINDOW_SECONDS: float = 5.0
 
 @export var car: CarController
 
 var _camera_rig: FollowCamera
 
+var _show_fps: bool = true
+var _frame_times: PackedFloat32Array = PackedFloat32Array()
+var _window_seconds: float = 0.0
+var _fps_average: float = 0.0
+var _fps_low: float = 0.0
+var _fps_timer: float = 0.0
+
 
 func _ready() -> void:
+	add_to_group("game_hud")
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## Called by the pause menu.
+func toggle_fps() -> void:
+	_show_fps = not _show_fps
+
+
+func is_fps_visible() -> bool:
+	return _show_fps
 
 
 ## Finds the car by scene path first, then by the "car" group.
@@ -30,7 +49,8 @@ func _find_car() -> CarController:
 	return found as CarController
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_record_frame(delta)
 	if not is_instance_valid(car):
 		car = _find_car()
 	if not is_instance_valid(_camera_rig):
@@ -42,6 +62,9 @@ func _draw() -> void:
 	var font: Font = ThemeDB.fallback_font
 	var u: float = size.y / 720.0
 	var right: float = size.x - 36.0 * u
+
+	if _show_fps:
+		_draw_fps(font, u)
 
 	if not is_instance_valid(car):
 		_text_right(font, "CAR NOT FOUND", right, 60.0 * u, int(32.0 * u), WHITE)
@@ -116,3 +139,35 @@ func _draw_camera_message(font: Font, u: float) -> void:
 		int(maxf(2.0, float(font_size) * 0.12)), Color(0.0, 0.0, 0.0, 0.85 * alpha))
 	draw_string(font, position_xy, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size,
 		Color(1.0, 1.0, 1.0, alpha))
+
+
+## Remembers how long the last frames took (the last few seconds).
+func _record_frame(delta: float) -> void:
+	_frame_times.append(delta)
+	_window_seconds += delta
+	while _window_seconds > FPS_WINDOW_SECONDS and _frame_times.size() > 1:
+		_window_seconds -= _frame_times[0]
+		_frame_times.remove_at(0)
+
+	# Recalculate twice a second, so the numbers are readable.
+	_fps_timer += delta
+	if _fps_timer < 0.5 or _window_seconds <= 0.0:
+		return
+	_fps_timer = 0.0
+	var slowest: float = 0.0001
+	for frame_time: float in _frame_times:
+		slowest = maxf(slowest, frame_time)
+	_fps_average = float(_frame_times.size()) / _window_seconds
+	_fps_low = 1.0 / slowest
+
+
+## "FPS 58  LOW 41": average over the last seconds, and the worst single frame in that time.
+## Green is smooth (50+), orange is playable (30-50), red is laggy (under 30).
+func _draw_fps(font: Font, u: float) -> void:
+	var color: Color = Color(0.5, 1.0, 0.55)
+	if _fps_average < 30.0:
+		color = RED
+	elif _fps_average < 50.0:
+		color = ORANGE
+	var label: String = "FPS %d   LOW %d" % [roundi(_fps_average), roundi(_fps_low)]
+	_text_left(font, label, 28.0 * u, 160.0 * u, int(26.0 * u), color)

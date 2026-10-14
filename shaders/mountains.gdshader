@@ -5,16 +5,17 @@ render_mode cull_disabled;
 // Near the car the height is zero (hidden under the ground), further away it rises.
 
 uniform vec2 center_xz = vec2(0.0);
-uniform float amplitude = 900.0;
-uniform float inner_radius = 1700.0;
-uniform float blend_distance = 1800.0;
-uniform float noise_scale = 2800.0;
+uniform float amplitude = 1300.0;
+uniform float inner_radius = 1500.0;
+uniform float blend_distance = 1400.0;
+uniform float noise_scale = 2600.0;
 uniform float cell_size = 150.0;
 uniform vec3 grass_color : source_color = vec3(0.16, 0.22, 0.09);
-uniform vec3 forest_color : source_color = vec3(0.07, 0.13, 0.06);
+uniform vec3 forest_color : source_color = vec3(0.045, 0.09, 0.04);
+uniform vec3 forest_light : source_color = vec3(0.12, 0.2, 0.07);
 uniform vec3 rock_color : source_color = vec3(0.36, 0.33, 0.3);
 // Height (0-1 of the amplitude) where bare rock starts to show.
-uniform float rock_start : hint_range(0.0, 1.0) = 0.5;
+uniform float rock_start : hint_range(0.0, 1.0) = 0.62;
 
 varying float v_height;
 varying float v_up;
@@ -85,7 +86,10 @@ void vertex() {
 
 void fragment() {
 	float patches = fbm(v_world_xz / 260.0);
-	vec3 lowland = mix(grass_color, forest_color, smoothstep(0.35, 0.65, patches));
+	// Small bumps like the tops of thousands of trees (forest canopy).
+	float canopy = 0.55 * value_noise(v_world_xz / 26.0) + 0.45 * value_noise(v_world_xz / 8.0);
+	vec3 trees = mix(forest_color, forest_light, canopy);
+	vec3 lowland = mix(grass_color, trees, smoothstep(0.25, 0.5, patches));
 	float steep = 1.0 - smoothstep(0.62, 0.8, v_up);
 	float high = smoothstep(rock_start, rock_start + 0.25, v_height);
 	float rock = clamp(max(steep, high), 0.0, 1.0);

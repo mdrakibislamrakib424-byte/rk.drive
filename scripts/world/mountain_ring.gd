@@ -10,11 +10,11 @@ const SHADER: Shader = preload("res://shaders/mountains.gdshader")
 @export var half_extent: float = 9000.0
 ## Number of grid cells along one side. cell size = 2 * half_extent / cells.
 @export var cells: int = 120
-@export var amplitude: float = 900.0
+@export var amplitude: float = 1300.0
 ## Distance from the car where the mountains start to rise.
-@export var inner_radius: float = 1700.0
-@export var blend_distance: float = 1800.0
-@export var noise_scale: float = 2800.0
+@export var inner_radius: float = 1500.0
+@export var blend_distance: float = 1400.0
+@export var noise_scale: float = 2600.0
 
 var _car: Node3D
 var _material: ShaderMaterial

@@ -73,6 +73,10 @@ void fragment() {
 	vec2 dirt_uv = p / dirt_tile_m;
 
 	vec3 grass = texture(grass_color, grass_uv).rgb * grass_tint;
+	// Fine detail on top (a second, smaller copy of the grass) and big warm/cool colour patches.
+	float fine = dot(texture(grass_color, grass_uv * 4.7 + vec2(0.37, 0.11)).rgb, vec3(0.333)) / 0.2;
+	grass *= mix(1.0, clamp(fine, 0.5, 1.6), 0.5);
+	grass *= mix(vec3(0.78, 0.92, 0.66), vec3(1.12, 1.04, 0.74), fbm(p / 75.0 + vec2(5.0, 9.0)));
 	vec3 dirt = texture(dirt_color, dirt_uv).rgb;
 	vec3 albedo = mix(grass, dirt, soil);
 
